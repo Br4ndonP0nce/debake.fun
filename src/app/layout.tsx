@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
+import { I18nProvider } from "@/components/providers/I18NProvider";
+import Script from "next/script";
+import FloatingNavbar from "@/components/ui/Nav/NavBar";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -24,10 +26,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <head>
+        <Script
+          src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
+          strategy="lazyOnload"
+        />
+      </head>
+      <body>
+        <FloatingNavbar />
+        <I18nProvider defaultLanguage="en">{children}</I18nProvider>
       </body>
     </html>
   );
