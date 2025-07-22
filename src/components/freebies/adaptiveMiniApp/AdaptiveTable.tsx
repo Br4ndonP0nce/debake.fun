@@ -1,8 +1,8 @@
-// src/components/freebie/LeadPreviewTable.tsx
+// src/components/freebies/miniApp-excel/AdaptiveTable.tsx
 "use client";
 
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -20,30 +20,35 @@ import {
   Users,
   Search,
   Building,
-  Briefcase,
   TrendingUp,
-  DollarSign,
   Phone,
   Mail,
-  Calendar,
   Filter,
   ArrowUpDown,
   Sparkles,
 } from "lucide-react";
-import { ProcessedLead } from "./ExcelUploader";
+import { useI18n } from "@/hooks/useI18n";
 
-interface LeadPreviewTableProps {
-  leads: ProcessedLead[];
-  onLeadSelect: (lead: ProcessedLead) => void;
+interface AdaptiveTableProps {
+  records: any[];
+  analysis: any;
+  onRecordSelect: (record: any) => void;
 }
 
-type SortField = "name" | "priority" | "createdAt" | "businessType";
+type SortField =
+  | "displayName"
+  | "priority"
+  | "createdAt"
+  | "status"
+  | "category";
 type SortDirection = "asc" | "desc";
 
-const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
-  leads,
-  onLeadSelect,
+const AdaptiveTable: React.FC<AdaptiveTableProps> = ({
+  records,
+  analysis,
+  onRecordSelect,
 }) => {
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLevel, setFilterLevel] = useState<
     "all" | "high" | "medium" | "low"
@@ -51,50 +56,33 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
-  // Get business type icon
-  const getBusinessTypeIcon = (businessType: string) => {
-    if (
-      businessType.includes("Agencia") ||
-      businessType.includes("Consultoría")
-    ) {
-      return <Briefcase className="h-3 w-3" />;
-    }
-    if (
-      businessType.includes("E-commerce") ||
-      businessType.includes("Retail")
-    ) {
-      return <Building className="h-3 w-3" />;
-    }
-    return <Building className="h-3 w-3" />;
-  };
-
-  // Get investment level details
-  const getInvestmentLevel = (level: "high" | "medium" | "low") => {
+  // Get priority level details
+  const getPriorityDetails = (level: "high" | "medium" | "low") => {
     switch (level) {
       case "high":
         return {
-          label: "🔥 Alto",
+          label: t("excel.table.highPriorityFilter"),
           color: "bg-red-100 text-red-700 border-red-200",
-          description: "Cuenta con $200",
+          description: t("common.maxPriority"),
         };
       case "medium":
         return {
-          label: "🟡 Medio",
+          label: t("excel.table.mediumPriorityFilter"),
           color: "bg-amber-100 text-amber-700 border-amber-200",
-          description: "Puede conseguir $200",
+          description: t("common.mediumPriority"),
         };
       case "low":
         return {
-          label: "❄️ Bajo",
+          label: t("excel.table.lowPriorityFilter"),
           color: "bg-blue-100 text-blue-700 border-blue-200",
-          description: "No cuenta con $200",
+          description: t("common.lowPriority"),
         };
     }
   };
 
-  // Sort leads
-  const sortLeads = (leads: ProcessedLead[]) => {
-    return [...leads].sort((a, b) => {
+  // Sort records
+  const sortRecords = (records: any[]) => {
+    return [...records].sort((a, b) => {
       let aValue: any = a[sortField];
       let bValue: any = b[sortField];
 
@@ -111,32 +99,33 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
     });
   };
 
-  // Filter and search leads
-  const filteredLeads = React.useMemo(() => {
-    let filtered = leads;
+  // Filter and search records
+  const filteredRecords = React.useMemo(() => {
+    let filtered = records;
 
     // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
-        (lead) =>
-          lead.name.toLowerCase().includes(term) ||
-          lead.email.toLowerCase().includes(term) ||
-          lead.phone.toLowerCase().includes(term) ||
-          lead.businessType.toLowerCase().includes(term)
+        (record) =>
+          record.displayName.toLowerCase().includes(term) ||
+          record.primaryContact.toLowerCase().includes(term) ||
+          record.secondaryContact.toLowerCase().includes(term) ||
+          record.status.toLowerCase().includes(term) ||
+          record.category.toLowerCase().includes(term)
       );
     }
 
-    // Apply investment level filter
+    // Apply priority level filter
     if (filterLevel !== "all") {
       filtered = filtered.filter(
-        (lead) => lead.investmentLevel === filterLevel
+        (record) => record.priorityLevel === filterLevel
       );
     }
 
     // Apply sorting
-    return sortLeads(filtered);
-  }, [leads, searchTerm, filterLevel, sortField, sortDirection]);
+    return sortRecords(filtered);
+  }, [records, searchTerm, filterLevel, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -145,15 +134,6 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
       setSortField(field);
       setSortDirection("desc");
     }
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("es-MX", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const getSortIcon = (field: SortField) => {
@@ -170,19 +150,23 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header with AI Badge */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-yellow-600 flex items-center gap-2">
             <Sparkles className="h-6 w-6 text-purple-600" />
-            Tus Leads Organizados
+            {t("excel.table.title")}
           </h2>
-          <p className="text-gray-600">
-            Automaticamente priorizados por nuestro sistema inteligente
+          <p className="text-yellow-600">
+            {t("excel.table.subtitle").replace(
+              "{businessType}",
+              analysis.businessType
+            )}
           </p>
         </div>
         <Badge className="bg-purple-100 text-purple-800 border-purple-200">
-          {filteredLeads.length} de {leads.length} leads
+          {filteredRecords.length} {t("common.of")} {records.length}{" "}
+          {t("common.records")}
         </Badge>
       </div>
 
@@ -192,7 +176,7 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
             type="search"
-            placeholder="Buscar por nombre, email, teléfono..."
+            placeholder={t("excel.table.searchPlaceholder")}
             className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -204,17 +188,19 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
           <select
             value={filterLevel}
             onChange={(e) => setFilterLevel(e.target.value as any)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+            className="px-3 py-2 border border-gray-300 text-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
           >
-            <option value="all">Todos los niveles</option>
-            <option value="high">🔥 Alta Prioridad</option>
-            <option value="medium">🟡 Media Prioridad</option>
-            <option value="low">❄️ Baja Prioridad</option>
+            <option value="all">{t("excel.table.allLevels")}</option>
+            <option value="high">{t("excel.table.highPriorityFilter")}</option>
+            <option value="medium">
+              {t("excel.table.mediumPriorityFilter")}
+            </option>
+            <option value="low">{t("excel.table.lowPriorityFilter")}</option>
           </select>
         </div>
       </div>
 
-      {/* Leads Table */}
+      {/* Records Table */}
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -223,11 +209,11 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
                 <TableRow>
                   <TableHead
                     className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleSort("name")}
+                    onClick={() => handleSort("displayName")}
                   >
                     <div className="flex items-center gap-1">
-                      Contacto
-                      {getSortIcon("name")}
+                      {t("excel.table.mainRecord")}
+                      {getSortIcon("displayName")}
                     </div>
                   </TableHead>
                   <TableHead
@@ -235,64 +221,74 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
                     onClick={() => handleSort("priority")}
                   >
                     <div className="flex items-center gap-1">
-                      Prioridad
+                      {t("excel.table.aiPriority")}
                       {getSortIcon("priority")}
                     </div>
                   </TableHead>
-                  <TableHead>Inversión ($200)</TableHead>
                   <TableHead
                     className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleSort("businessType")}
+                    onClick={() => handleSort("status")}
                   >
                     <div className="flex items-center gap-1">
-                      Tipo de Negocio
-                      {getSortIcon("businessType")}
+                      {t("excel.table.status")}
+                      {getSortIcon("status")}
                     </div>
                   </TableHead>
-                  <TableHead>Descripción</TableHead>
                   <TableHead
                     className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleSort("createdAt")}
+                    onClick={() => handleSort("category")}
                   >
                     <div className="flex items-center gap-1">
-                      Fecha
-                      {getSortIcon("createdAt")}
+                      {t("excel.table.category")}
+                      {getSortIcon("category")}
                     </div>
                   </TableHead>
-                  <TableHead>Acciones</TableHead>
+                  <TableHead>{t("excel.table.contact")}</TableHead>
+                  <TableHead>{t("excel.table.valueReason")}</TableHead>
+                  <TableHead>{t("excel.table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLeads.map((lead, index) => {
-                  const investmentData = getInvestmentLevel(
-                    lead.investmentLevel
-                  );
+                {filteredRecords.map((record, index) => {
+                  const priorityData = getPriorityDetails(record.priorityLevel);
 
                   return (
                     <TableRow
-                      key={lead.id}
+                      key={record.id}
                       className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => onLeadSelect(lead)}
+                      onClick={() => onRecordSelect(record)}
                     >
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-8 w-8">
                             <AvatarFallback className="bg-purple-100 text-purple-700 text-xs">
-                              {lead.name.slice(0, 2).toUpperCase()}
+                              {record.displayName.slice(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div>
                             <div className="font-medium text-sm">
-                              {lead.name}
+                              {record.displayName}
                             </div>
-                            <div className="text-xs text-gray-500 flex items-center gap-2">
-                              <Mail className="h-3 w-3" />
-                              {lead.email}
-                            </div>
-                            <div className="text-xs text-gray-500 flex items-center gap-2">
-                              <Phone className="h-3 w-3" />
-                              {lead.phone}
-                            </div>
+                            {record.primaryContact && (
+                              <div className="text-xs text-gray-500 flex items-center gap-2">
+                                {record.primaryContact.includes("@") ? (
+                                  <Mail className="h-3 w-3" />
+                                ) : (
+                                  <Phone className="h-3 w-3" />
+                                )}
+                                {record.primaryContact}
+                              </div>
+                            )}
+                            {record.secondaryContact && (
+                              <div className="text-xs text-gray-500 flex items-center gap-2">
+                                {record.secondaryContact.includes("@") ? (
+                                  <Mail className="h-3 w-3" />
+                                ) : (
+                                  <Phone className="h-3 w-3" />
+                                )}
+                                {record.secondaryContact}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -302,7 +298,7 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
                           <div className="flex items-center gap-1">
                             <TrendingUp className="h-4 w-4 text-purple-600" />
                             <span className="font-bold text-lg text-purple-700">
-                              {Math.round(lead.priority)}
+                              {Math.round(record.priority)}
                             </span>
                           </div>
                           {index < 3 && (
@@ -311,54 +307,64 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
                             </Badge>
                           )}
                         </div>
+                        <Badge className={`${priorityData.color} text-xs mt-1`}>
+                          {priorityData.label}
+                        </Badge>
                       </TableCell>
 
                       <TableCell>
-                        <div className="space-y-2">
-                          <Badge className={`${investmentData.color} text-xs`}>
-                            {investmentData.label}
-                          </Badge>
-                          <div className="text-xs text-gray-600">
-                            {investmentData.description}
-                          </div>
-                          <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded max-w-xs">
-                            "
-                            {lead.investmentText.length > 50
-                              ? `${lead.investmentText.substring(0, 50)}...`
-                              : lead.investmentText}
-                            "
+                        <div className="space-y-1">
+                          <div className="font-medium text-sm">
+                            {record.status || t("common.noStatus")}
                           </div>
                         </div>
                       </TableCell>
 
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {getBusinessTypeIcon(lead.businessType)}
+                          <Building className="h-3 w-3 text-gray-500" />
                           <div className="text-sm">
                             <div className="font-medium">
-                              {lead.businessType}
+                              {record.category || t("common.noCategory")}
                             </div>
                           </div>
                         </div>
                       </TableCell>
 
                       <TableCell>
-                        <div className="text-sm max-w-xs">
-                          <div className="text-gray-700 line-clamp-2">
-                            {lead.businessDescription.length > 80
-                              ? `${lead.businessDescription.substring(
-                                  0,
-                                  80
-                                )}...`
-                              : lead.businessDescription || "Sin descripción"}
-                          </div>
+                        <div className="text-sm space-y-1">
+                          {record.primaryContact && (
+                            <div className="text-gray-700">
+                              {record.primaryContact.length > 25
+                                ? `${record.primaryContact.substring(0, 25)}...`
+                                : record.primaryContact}
+                            </div>
+                          )}
+                          {record.secondaryContact && (
+                            <div className="text-gray-500 text-xs">
+                              {record.secondaryContact.length > 25
+                                ? `${record.secondaryContact.substring(
+                                    0,
+                                    25
+                                  )}...`
+                                : record.secondaryContact}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
 
                       <TableCell>
-                        <div className="text-xs text-gray-500 flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(lead.createdAt)}
+                        <div className="text-sm space-y-1">
+                          {record.financialValue ? (
+                            <div className="font-medium text-green-600">
+                              ${record.financialValue.toLocaleString()}
+                            </div>
+                          ) : null}
+                          <div className="text-xs text-gray-500 bg-gray-50 p-1 rounded max-w-xs">
+                            {record.priorityReason.length > 40
+                              ? `${record.priorityReason.substring(0, 40)}...`
+                              : record.priorityReason}
+                          </div>
                         </div>
                       </TableCell>
 
@@ -368,7 +374,7 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
                           variant="ghost"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onLeadSelect(lead);
+                            onRecordSelect(record);
                           }}
                         >
                           <Eye className="h-4 w-4" />
@@ -382,16 +388,16 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
           </div>
 
           {/* Empty State */}
-          {filteredLeads.length === 0 && (
+          {filteredRecords.length === 0 && (
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No se encontraron leads
+                {t("excel.table.noRecords")}
               </h3>
               <p className="text-gray-500">
                 {searchTerm || filterLevel !== "all"
-                  ? "Intenta ajustar tus filtros de búsqueda."
-                  : "Los leads aparecerán aquí una vez que subas tu Excel."}
+                  ? t("excel.table.adjustFilters")
+                  : t("excel.table.recordsAppear")}
               </p>
             </div>
           )}
@@ -405,12 +411,10 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
             <Sparkles className="h-5 w-5 text-purple-600 mt-0.5" />
             <div>
               <h4 className="font-medium text-purple-900 mb-1">
-                💡 Tip del CRM Profesional
+                {t("excel.table.intelligentTip")}
               </h4>
               <p className="text-sm text-purple-800">
-                Los leads están automáticamente ordenados por prioridad. Los
-                puntajes altos (90+) indican que ya cuentan con presupuesto y
-                están listos para comprar. ¡Contacta estos primero!
+                {t("excel.table.algorithmDesc")}
               </p>
             </div>
           </div>
@@ -420,4 +424,4 @@ const LeadPreviewTable: React.FC<LeadPreviewTableProps> = ({
   );
 };
 
-export default LeadPreviewTable;
+export default AdaptiveTable;

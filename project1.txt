@@ -1,0 +1,52 @@
+src/
+├── app
+│   ├── (marketing)
+│   │   ├── freebies
+│   │   │   └── youruglyexcelhere
+│   │   │       └── page.tsx
+│   │   └── page.tsx
+│   ├── favicon.ico
+│   ├── globals.css
+│   └── layout.tsx
+├── components
+│   ├── freebies
+│   │   ├── adaptiveMiniApp
+│   │   │   ├── AdaptiveDetailView.tsx
+│   │   │   ├── AdaptivePreviewComponents.tsx
+│   │   │   ├── AdaptiveStats.tsx
+│   │   │   ├── AdaptiveTable.tsx
+│   │   │   ├── MainPage.tsx
+│   │   │   ├── SmartExcelProcessor.tsx
+│   │   │   └── SmartExcelUploader.tsx
+│   │   └── miniApp-excel
+│   │       ├── ExcelUploader.tsx
+│   │       ├── LeadDetailPreview.tsx
+│   │       ├── LeadPreviewTable.tsx
+│   │       ├── PreviewStats.tsx
+│   │       └── freebie.tsx
+│   ├── providers
+│   │   └── I18NProvider.tsx
+│   └── ui
+│       ├── Footer
+│       │   └── Footer.tsx
+│       ├── LanguageToggle.tsx
+│       ├── Marketing
+│       │   └── Hero
+│       │       └── Hero.tsx
+│       ├── Nav
+│       │   └── NavBar.tsx
+│       ├── animated
+│       │   └── DecryptedText.tsx
+│       ├── avatar.tsx
+│       ├── badge.tsx
+│       ├── button.tsx
+│       ├── card.tsx
+│       ├── input.tsx
+│       └── table.tsx
+├── hooks
+│   └── useI18n.ts
+└── lib
+    ├── utils.ts
+    └── xlsx-global.ts
+
+18 directories, 32 files

@@ -4,6 +4,7 @@ import "./globals.css";
 import { I18nProvider } from "@/components/providers/I18NProvider";
 import Script from "next/script";
 import FloatingNavbar from "@/components/ui/Nav/NavBar";
+import Footer from "@/components/ui/Footer/Footer";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -33,8 +34,11 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <FloatingNavbar />
-        <I18nProvider defaultLanguage="en">{children}</I18nProvider>
+        <I18nProvider defaultLanguage="en">
+          <FloatingNavbar />
+          {children}
+          <Footer />
+        </I18nProvider>
       </body>
     </html>
   );

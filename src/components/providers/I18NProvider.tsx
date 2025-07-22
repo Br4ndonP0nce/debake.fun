@@ -27,20 +27,27 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
   // Initialize language on mount
   useEffect(() => {
     const initializeLanguage = () => {
+      console.log("🌍 Initializing i18n...");
+
       // Priority: 1. Stored preference, 2. Browser language, 3. Default
       const storedLang = getLanguageFromStorage();
       const browserLang = detectBrowserLanguage();
 
       const initialLang = storedLang || browserLang || defaultLanguage;
+      console.log(`🌍 Selected language: ${initialLang}`);
+
       setLanguageState(initialLang);
       setIsInitialized(true);
     };
 
-    initializeLanguage();
+    // Add a small delay to ensure DOM is ready
+    const timer = setTimeout(initializeLanguage, 100);
+    return () => clearTimeout(timer);
   }, [defaultLanguage]);
 
   // Update language and persist to storage
   const setLanguage = (lang: Language) => {
+    console.log(`🌍 Switching language from ${language} to ${lang}`);
     setLanguageState(lang);
     saveLanguageToStorage(lang);
   };
@@ -64,7 +71,11 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
 
   // Don't render until language is initialized to prevent hydration issues
   if (!isInitialized) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+      </div>
+    );
   }
 
   const contextValue = {
@@ -72,6 +83,8 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({
     setLanguage,
     t,
   };
+
+  console.log("🌍 I18nProvider rendering with language:", language);
 
   return (
     <I18nContext.Provider value={contextValue}>{children}</I18nContext.Provider>

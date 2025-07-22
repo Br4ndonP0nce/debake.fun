@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/hooks/useI18n";
 import DecryptedText from "../../animated/DecryptedText";
+import Link from "next/link";
 import {
   Code2,
   Zap,
@@ -23,7 +24,7 @@ const DebakeHero = () => {
   const [isTyping, setIsTyping] = useState(true);
   const { t, language } = useI18n();
 
-  // Get tools array from translations - fix the access pattern
+  // Get tools array from translations
   const tools = [
     t("hero.tool1") || "Excel Transformer",
     t("hero.tool2") || "API Debugger",
@@ -31,34 +32,35 @@ const DebakeHero = () => {
     t("hero.tool4") || "Workflow Automator",
   ];
 
-  /* console.log("Tools array:", tools); // Debug log
-  console.log("Current tool index:", currentTool); // Debug log
-  console.log("Current tool:", tools[currentTool]); // Debug log
-*/
-  // Get features from translations
+  // Since your translations have features as an array, we need to access them differently
+  // Let's create the features array directly in the component
   const features = [
     {
       icon: <FileSpreadsheet className="h-5 w-5" />,
-      title: t("hero.features.0.title") || "Excel → CRM Magic",
+      title: language === "en" ? "Excel → CRM Magic" : "Excel → Magia CRM",
       description:
-        t("hero.features.0.description") ||
-        "Transform ugly spreadsheets into organized lead data",
-      status: t("hero.features.0.status") || "🔥 Hot",
+        language === "en"
+          ? "Transform ugly spreadsheets into organized lead data"
+          : "Transforma hojas de cálculo feas en datos organizados",
+      status: language === "en" ? "🔥 Hot" : "🔥 Trending",
     },
     {
       icon: <Zap className="h-5 w-5" />,
-      title: t("hero.features.1.title") || "API Stress Tester",
+      title: language === "en" ? "API Stress Tester" : "Estresador de APIs",
       description:
-        t("hero.features.1.description") ||
-        "Break your APIs before your users do",
-      status: t("hero.features.1.status") || "🚧 Building",
+        language === "en"
+          ? "Break your APIs before your users do"
+          : "Rompe tus APIs antes que lo hagan tus usuarios",
+      status: language === "en" ? "🚧 Building" : "🚧 Construyendo",
     },
     {
       icon: <Database className="h-5 w-5" />,
-      title: t("hero.features.2.title") || "Data Playground",
+      title: language === "en" ? "Data Playground" : "Playground de Datos",
       description:
-        t("hero.features.2.description") || "Visualize any dataset in seconds",
-      status: t("hero.features.2.status") || "💭 Ideating",
+        language === "en"
+          ? "Visualize any dataset in seconds"
+          : "Visualiza cualquier dataset en segundos",
+      status: language === "en" ? "💭 Ideating" : "💭 Ideando",
     },
   ];
 
@@ -119,6 +121,7 @@ const DebakeHero = () => {
         <div className="mb-8 space-y-4">
           <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-white via-green-200 to-emerald-400 bg-clip-text text-transparent leading-tight">
             <DecryptedText
+              key={`title-${language}`} // Force re-render on language change
               text="debake.fun"
               animateOn="view"
               speed={30}
@@ -132,6 +135,7 @@ const DebakeHero = () => {
 
           <div className="flex items-center justify-center gap-2 text-xl md:text-2xl text-gray-300">
             <DecryptedText
+              key={`subtitle-${language}`} // Force re-render on language change
               text={t("hero.subtitle")}
               animateOn="view"
               speed={50}
@@ -159,6 +163,7 @@ const DebakeHero = () => {
 
           <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
             <DecryptedText
+              key={`description-${language}`} // Force re-render on language change
               text={t("hero.description")}
               animateOn="view"
               speed={15}
@@ -173,21 +178,24 @@ const DebakeHero = () => {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mb-12">
-          <Button
-            size="lg"
-            className="bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-4 text-lg group"
-          >
-            <FileSpreadsheet className="h-5 w-5 mr-2" />
-            <DecryptedText
-              text={t("hero.primaryCTA")}
-              animateOn="hover"
-              speed={30}
-              sequential={true}
-              className="text-black font-semibold"
-              encryptedClassName="text-black/70 font-semibold"
-            />
-            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
+          <Link href="/freebies/youruglyexcelhere">
+            <Button
+              size="lg"
+              className="bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-4 text-lg group"
+            >
+              <FileSpreadsheet className="h-5 w-5 mr-2" />
+              <DecryptedText
+                key={`primary-cta-${language}`} // Force re-render on language change
+                text={t("hero.primaryCTA")}
+                animateOn="hover"
+                speed={30}
+                sequential={true}
+                className="text-black font-semibold"
+                encryptedClassName="text-black/70 font-semibold"
+              />
+              <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
 
           <Button
             size="lg"
@@ -196,6 +204,7 @@ const DebakeHero = () => {
           >
             <Github className="h-5 w-5 mr-2" />
             <DecryptedText
+              key={`secondary-cta-${language}`} // Force re-render on language change
               text={t("hero.secondaryCTA")}
               animateOn="hover"
               speed={30}
@@ -210,7 +219,7 @@ const DebakeHero = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {features.map((feature, index) => (
             <div
-              key={index}
+              key={`${index}-${language}`} // Add language to key for re-render
               className="group bg-white/5 backdrop-blur-sm border border-green-500/20 rounded-lg p-6 hover:bg-white/10 transition-all duration-300 hover:border-green-400/40"
             >
               <div className="flex items-center justify-between mb-3">
@@ -227,6 +236,7 @@ const DebakeHero = () => {
 
               <h3 className="font-semibold text-white mb-2 group-hover:text-green-200 transition-colors">
                 <DecryptedText
+                  key={`feature-title-${index}-${language}`} // Force re-render on language change
                   text={feature.title}
                   animateOn="view"
                   speed={40}
@@ -238,6 +248,7 @@ const DebakeHero = () => {
 
               <p className="text-gray-400 text-sm leading-relaxed">
                 <DecryptedText
+                  key={`feature-desc-${index}-${language}`} // Force re-render on language change
                   text={feature.description}
                   animateOn="view"
                   speed={20}
@@ -255,6 +266,7 @@ const DebakeHero = () => {
           <div className="flex items-center gap-2">
             <Coffee className="h-4 w-4" />
             <DecryptedText
+              key={`footer-caffeine-${language}`} // Force re-render on language change
               text={t("hero.footer.caffeine")}
               animateOn="view"
               speed={25}
@@ -266,6 +278,7 @@ const DebakeHero = () => {
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             <DecryptedText
+              key={`footer-chaos-${language}`} // Force re-render on language change
               text={t("hero.footer.chaos")}
               animateOn="view"
               speed={25}
@@ -277,6 +290,7 @@ const DebakeHero = () => {
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             <DecryptedText
+              key={`footer-author-${language}`} // Force re-render on language change
               text={t("hero.footer.author")}
               animateOn="view"
               speed={25}

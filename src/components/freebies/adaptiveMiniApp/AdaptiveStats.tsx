@@ -1,4 +1,4 @@
-// src/components/freebie/PreviewStats.tsx
+// src/components/freebies/miniApp-excel/AdaptiveStats.tsx
 "use client";
 
 import React from "react";
@@ -11,11 +11,13 @@ import {
   Target,
   Zap,
   AlertTriangle,
+  Building,
 } from "lucide-react";
-import { ProcessedLead } from "./ExcelUploader";
+import { useI18n } from "@/hooks/useI18n";
 
-interface PreviewStatsProps {
-  leads: ProcessedLead[];
+interface AdaptiveStatsProps {
+  records: any[];
+  analysis: any;
 }
 
 interface StatCardProps {
@@ -70,26 +72,30 @@ const StatCard: React.FC<StatCardProps> = ({
   );
 };
 
-const PreviewStats: React.FC<PreviewStatsProps> = ({ leads }) => {
+const AdaptiveStats: React.FC<AdaptiveStatsProps> = ({ records, analysis }) => {
+  const { t } = useI18n();
+
   // Calculate statistics
   const stats = React.useMemo(() => {
-    const total = leads.length;
-    const highPriority = leads.filter(
-      (l) => l.investmentLevel === "high"
+    const total = records.length;
+    const highPriority = records.filter(
+      (r) => r.priorityLevel === "high"
     ).length;
-    const mediumPriority = leads.filter(
-      (l) => l.investmentLevel === "medium"
+    const mediumPriority = records.filter(
+      (r) => r.priorityLevel === "medium"
     ).length;
-    const lowPriority = leads.filter((l) => l.investmentLevel === "low").length;
+    const lowPriority = records.filter((r) => r.priorityLevel === "low").length;
 
-    // Potential revenue calculation based on investment level
-    const potentialRevenue = leads.reduce((sum, lead) => {
-      if (lead.investmentLevel === "high") return sum + 1300;
-      if (lead.investmentLevel === "medium") return sum + 800;
-      return sum + 300; // low priority still has some potential
+    // Calculate potential revenue
+    const potentialRevenue = records.reduce((sum, record) => {
+      if (record.financialValue) return sum + record.financialValue;
+      // Estimate based on priority if no financial data
+      if (record.priorityLevel === "high") return sum + 1500;
+      if (record.priorityLevel === "medium") return sum + 800;
+      return sum + 300;
     }, 0);
 
-    // Conversion potential percentage
+    // Conversion potential
     const conversionPotential =
       total > 0
         ? Math.round(
@@ -99,13 +105,27 @@ const PreviewStats: React.FC<PreviewStatsProps> = ({ leads }) => {
           )
         : 0;
 
-    // Average priority score
-    const avgPriority =
-      total > 0
-        ? Math.round(
-            leads.reduce((sum, lead) => sum + lead.priority, 0) / total
-          )
-        : 0;
+    // Category analysis
+    const categories = records.reduce((acc, record) => {
+      const cat = record.category || t("common.noCategory");
+      acc[cat] = (acc[cat] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const topCategories = Object.entries(categories)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .slice(0, 3);
+
+    // Status analysis
+    const statuses = records.reduce((acc, record) => {
+      const status = record.status || t("common.noStatus");
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const topStatuses = Object.entries(statuses)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .slice(0, 3);
 
     return {
       total,
@@ -114,53 +134,43 @@ const PreviewStats: React.FC<PreviewStatsProps> = ({ leads }) => {
       lowPriority,
       potentialRevenue,
       conversionPotential,
-      avgPriority,
+      topCategories,
+      topStatuses,
+      avgPriority: Math.round(
+        records.reduce((sum, r) => sum + r.priority, 0) / total
+      ),
     };
-  }, [leads]);
-
-  // Business type analysis
-  const businessTypes = React.useMemo(() => {
-    const types = leads.reduce((acc, lead) => {
-      acc[lead.businessType] = (acc[lead.businessType] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return Object.entries(types)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 3); // Top 3 business types
-  }, [leads]);
-
-  if (leads.length === 0) {
-    return null;
-  }
+  }, [records, t]);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-gray-900">
-          Análisis Inteligente de tus Leads
+          {t("excel.stats.title")}
         </h2>
         <p className="text-gray-600">
-          Así es como nuestro CRM organiza y prioriza automáticamente tu
-          información
+          {t("excel.stats.subtitle").replace(
+            "{businessType}",
+            analysis.businessType
+          )}
         </p>
       </div>
 
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total de Leads"
+          title={t("excel.stats.totalRecords")}
           value={stats.total}
-          subtitle="Leads importados"
+          subtitle={t("excel.stats.recordsProcessed")}
           icon={<Users className="h-6 w-6" />}
           color="blue"
         />
 
         <StatCard
-          title="Alta Prioridad"
+          title={t("excel.stats.highPriority")}
           value={stats.highPriority}
-          subtitle="🔥 Listos para comprar"
+          subtitle={t("excel.stats.readyToBuy")}
           icon={<Zap className="h-6 w-6" />}
           color="red"
           badge={{
@@ -170,17 +180,17 @@ const PreviewStats: React.FC<PreviewStatsProps> = ({ leads }) => {
         />
 
         <StatCard
-          title="Ingresos Potenciales"
-          value={`$${stats.potentialRevenue.toLocaleString()}`}
-          subtitle="Basado en niveles de inversión"
+          title={t("excel.stats.potentialValue")}
+          value={`${stats.potentialRevenue.toLocaleString()}`}
+          subtitle={t("excel.stats.basedOnInvestment")}
           icon={<DollarSign className="h-6 w-6" />}
           color="green"
         />
 
         <StatCard
-          title="Potencial de Conversión"
+          title={t("excel.stats.conversionPotential")}
           value={`${stats.conversionPotential}%`}
-          subtitle="Probabilidad estimada"
+          subtitle={t("excel.stats.estimatedProbability")}
           icon={<Target className="h-6 w-6" />}
           color="purple"
         />
@@ -188,19 +198,19 @@ const PreviewStats: React.FC<PreviewStatsProps> = ({ leads }) => {
 
       {/* Detailed Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Investment Level Breakdown */}
+        {/* Priority Breakdown */}
         <Card>
           <CardContent className="p-6">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
               <TrendingUp className="h-5 w-5 mr-2 text-purple-600" />
-              Distribución por Nivel de Inversión
+              {t("excel.stats.priorityBreakdown")}
             </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                   <span className="text-sm font-medium">
-                    Alta Prioridad (Cuentan con $200)
+                    {t("excel.table.highPriorityFilter")}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -217,7 +227,7 @@ const PreviewStats: React.FC<PreviewStatsProps> = ({ leads }) => {
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
                   <span className="text-sm font-medium">
-                    Media Prioridad (Pueden conseguir $200)
+                    {t("excel.table.mediumPriorityFilter")}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -234,7 +244,7 @@ const PreviewStats: React.FC<PreviewStatsProps> = ({ leads }) => {
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                   <span className="text-sm font-medium">
-                    Baja Prioridad (No cuentan con $200)
+                    {t("excel.table.lowPriorityFilter")}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -250,23 +260,29 @@ const PreviewStats: React.FC<PreviewStatsProps> = ({ leads }) => {
           </CardContent>
         </Card>
 
-        {/* Business Types */}
+        {/* Category Analysis */}
         <Card>
           <CardContent className="p-6">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-              <Users className="h-5 w-5 mr-2 text-blue-600" />
-              Tipos de Negocio Principales
+              <Building className="h-5 w-5 mr-2 text-blue-600" />
+              {stats.topCategories.length > 0
+                ? t("common.mainCategories")
+                : t("common.mainStatuses")}
             </h3>
             <div className="space-y-3">
-              {businessTypes.map(([type, count], index) => (
-                <div key={type} className="flex items-center justify-between">
+              {(stats.topCategories.length > 0
+                ? stats.topCategories
+                : stats.topStatuses
+              ).map(([name, count], index) => (
+                <div key={name} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-medium text-gray-700">
-                      #{index + 1} {type}
+                      #{index + 1} {name}
                     </span>
                   </div>
                   <Badge variant="outline">
-                    {count} lead{count !== 1 ? "s" : ""}
+                    {count as number} {t("common.record")}
+                    {(count as number) !== 1 ? "s" : ""}
                   </Badge>
                 </div>
               ))}
@@ -275,31 +291,42 @@ const PreviewStats: React.FC<PreviewStatsProps> = ({ leads }) => {
         </Card>
       </div>
 
-      {/* Insights & Recommendations */}
+      {/* Business Type Specific Insights */}
       <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
         <CardContent className="p-6">
           <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
             <AlertTriangle className="h-5 w-5 mr-2 text-purple-600" />
-            Insights Automáticos del CRM
+            {t("excel.stats.specificInsights").replace(
+              "{businessType}",
+              analysis.businessType
+            )}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <h4 className="font-medium text-purple-900">
-                🎯 Prioriza estos leads:
+                {t("excel.stats.immediateRecommendation")}
               </h4>
               <p className="text-sm text-purple-800">
-                Tienes {stats.highPriority} leads de alta prioridad que ya
-                cuentan con presupuesto. Contacta primero a estos para maximizar
-                conversiones.
+                {stats.highPriority > 0
+                  ? t("excel.stats.highPriorityDesc").replace(
+                      "{count}",
+                      stats.highPriority.toString()
+                    )
+                  : t("excel.stats.mediumPriorityDesc").replace(
+                      "{count}",
+                      stats.mediumPriority.toString()
+                    )}
               </p>
             </div>
             <div className="space-y-2">
               <h4 className="font-medium text-purple-900">
-                💰 Potencial de ingresos:
+                {t("excel.stats.opportunityDetected")}
               </h4>
               <p className="text-sm text-purple-800">
-                Con una estrategia enfocada, podrías generar hasta $
-                {stats.potentialRevenue.toLocaleString()} con estos leads.
+                {t("excel.stats.conversionImprovement").replace(
+                  "{rate}",
+                  (stats.conversionPotential + 15).toString()
+                )}
               </p>
             </div>
           </div>
@@ -309,4 +336,4 @@ const PreviewStats: React.FC<PreviewStatsProps> = ({ leads }) => {
   );
 };
 
-export default PreviewStats;
+export default AdaptiveStats; // src/components/freebies/miniApp-excel/AdaptiveStats.tsx
